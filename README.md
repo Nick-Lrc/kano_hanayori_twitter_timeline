@@ -1,2 +1,2 @@
-# kano_hanayori_twitter_timeline
+# kano_hanayori_twitter
 Archive of @Kanolive tweets
