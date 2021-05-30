@@ -1,5 +1,11 @@
 # Media directory
 media/
+recycle/
+test/
+
+# Issue fixing scripts
+media_refactor.py
+media_cleaner.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
