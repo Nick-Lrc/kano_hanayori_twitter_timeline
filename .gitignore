@@ -6,7 +6,6 @@ test/
 # Issue fixing scripts
 media_refactor.py
 media_cleaner.py
-thumbnail_generator.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
