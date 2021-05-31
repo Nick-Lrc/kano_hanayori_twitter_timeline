@@ -3,7 +3,7 @@ import pickle
 from collections import defaultdict
 
 WORKING_DIR = 'media'
-OUTPUT_PATH = 'exts.pkl'
+OUTPUT_PATH = 'exts.pickle'
 
 def export_data(data, dst):
     with open(dst, 'wb') as f:

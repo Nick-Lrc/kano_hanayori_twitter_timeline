@@ -6,6 +6,9 @@ test/
 # Issue fixing scripts
 media_refactor.py
 
+# vscode
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

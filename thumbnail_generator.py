@@ -51,7 +51,7 @@ def export_thumbnail(src):
     ])
 
 if __name__ == '__main__':
-    exts = import_data('exts.pkl')
+    exts = import_data('exts.pickle')
     for ext in VIDEO_EXTENSIONS:
         videos = exts[ext]
         print(f'Type: {ext}')
