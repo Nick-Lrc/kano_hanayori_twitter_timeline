@@ -27,9 +27,8 @@ if __name__ == '__main__':
         urls = get_urls(tweet)
         for idx, url in urls:
             name = f'{tid}_{idx}'
-            if url in url_to_name:
-                name = url_to_name[url]
-            else:
+            if url not in url_to_name:
                 url_to_name[url] = name
+                
     print(f'Found {len(url_to_name)} unique urls.')
     export_data(url_to_name, 'url_to_name.json')
