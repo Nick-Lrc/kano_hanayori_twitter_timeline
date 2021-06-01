@@ -58,6 +58,9 @@ def get_images_to_move(imgs):
                     imgs_to_move.add((dir_path, filename))
     return imgs_to_move
 
+def is_directory_empty(path):
+    return len(os.listdir(path)) == 0
+
 if __name__ == '__main__':
     create_directory(BACKUP_DIR)
     url_to_name = import_json('url_to_name.json')
@@ -83,3 +86,12 @@ if __name__ == '__main__':
         if (i + 1) % 10 == 0:
             print(f'Moved {i + 1}/{num_media} media.')
     print(f'Moved {num_media}/{num_media} media.')
+    print()
+
+    count = 0
+    for subdir in os.listdir(WORKING_DIR):
+        path = os.path.join(WORKING_DIR, subdir)
+        if is_directory_empty(path):
+            shutil.rmtree(path)
+            count += 1
+    print(f'Removed {count} empty directories.')
