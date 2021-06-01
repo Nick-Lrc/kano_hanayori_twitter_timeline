@@ -1,9 +1,12 @@
 import json
 import os
 import shutil
+import pickle
 
 WORKING_DIR = 'media'
 BACKUP_DIR = 'backup'
+
+MIN_IMG_WIDTH = 200
 
 # @Kanolive_ became private.
 PRESERVED_DOMAINS = {
@@ -19,7 +22,11 @@ MOVING_EXTENSIONS = {
     '.xml'
 }
 
-def import_data(src):
+def import_pickle(src):
+    with open(src, 'rb') as f:
+        return pickle.load(f)
+
+def import_json(src):
     with open(src, 'r') as f:
         return json.load(f)
 
@@ -41,11 +48,22 @@ def get_media_to_move(src):
             media.add((src, file))
     return media
 
+def get_images_to_move(imgs):
+    imgs_to_move = set()
+    for size in imgs:
+        if size[0] < MIN_IMG_WIDTH:
+            for dirname, filename in imgs[size]:
+                dir_path = os.path.join(WORKING_DIR, dirname)
+                if os.path.exists(os.path.join(dir_path, filename)):
+                    imgs_to_move.add((dir_path, filename))
+    return imgs_to_move
+
 if __name__ == '__main__':
     create_directory(BACKUP_DIR)
+    url_to_name = import_json('url_to_name.json')
+    imgs = import_pickle('img_sizes.pickle')
+    media_to_move = get_images_to_move(imgs)
 
-    url_to_name = import_data('url_to_name.json')
-    media_to_move = set()
     for url, name in url_to_name.items():
         if not is_domain_preserved(url):
             src = os.path.join(WORKING_DIR, name)
