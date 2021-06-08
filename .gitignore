@@ -2,6 +2,7 @@
 media/
 backup/
 test/
+refactor/
 
 # Issue fixing scripts
 media_refactor.py
