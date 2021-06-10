@@ -1,0 +1,18 @@
+[
+    [
+        "python", 
+        "src/setup.py", 
+        "-i", 
+        "src/configs/requirements.json"
+    ],
+    [
+        "python", 
+        "src/twitter_downloader.py", 
+        "-c", 
+        "src/configs/credentials.json", 
+        "-s",
+        "src/configs/twitter.json",
+        "-o",
+        "data/texts"
+    ]
+]

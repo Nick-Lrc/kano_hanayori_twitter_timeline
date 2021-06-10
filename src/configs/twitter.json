@@ -1,0 +1,25 @@
+{
+    "username": "Kanolive_",
+    "profile_banner_url": "https://pbs.twimg.com/profile_banners/1156716507042205696/1613401960",
+    "user_parameters": {
+        "user_fields": [
+            "created_at",
+            "description",
+            "entities",
+            "location",
+            "profile_image_url",
+            "protected",
+            "public_metrics"
+        ]
+    },
+    "tweet_parameters": {
+        "max_results": 100,
+        "until_id": null,
+        "tweet_fields": [
+            "created_at",
+            "entities",
+            "public_metrics",
+            "source"
+        ]
+    }
+}
