@@ -32,6 +32,7 @@ if __name__ == '__main__':
 
     for i, command in enumerate(commands):
         name = command[1]
+        _print_horizontal_bar()
         print(f'[{i + 1}/{len(commands)}] Running {name}...')
         _print_horizontal_bar()
 

@@ -9,7 +9,7 @@ data/
 src/configs/credentials.json
 
 # Test configs
-src/configs/scripts_test.json
+src/configs/test/
 
 # Issue fixing scripts
 media_refactor.py
