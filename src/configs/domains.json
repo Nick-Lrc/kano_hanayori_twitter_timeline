@@ -1,14 +1,8 @@
 {
-    "downloaders": {
-        "https://www.youtube.com/": "youtube-dl"
-    },
     "local": [
         "https://twitter.com/Kanolive_/",
         "https://twitter.com/kano_hanayori/"
     ],
-    "map": {
-        "https://youtu.be/": "https://www.youtube.com/watch?v="
-    },
     "skip": [
         "https://bml.bilibili.com/",
         "https://live.bilibili.com/",
@@ -21,5 +15,21 @@
         "https://m.youtube.com/channel/",
         "https://www.youtube.com/c/",
         "https://www.youtube.com/channel/"
-    ]
+    ],
+    "map": {
+        "https://youtu.be/": "https://www.youtube.com/watch?v="
+    },
+    "redundant": {
+        "https://twitter.com/": [
+            "/photo/1",
+            "/video/1"
+        ],
+        "https://www.youtube.com/": [
+            "&feature=youtu.be"
+        ]
+    },
+    "downloaders": {
+        "default": "you-get",
+        "https://www.youtube.com/": "youtube-dl"
+    }
 }

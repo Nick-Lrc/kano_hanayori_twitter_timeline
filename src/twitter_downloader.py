@@ -6,7 +6,7 @@ The default
 - Output directory locates at '../data/texts'.
 
 Example usage:
-    python twitter.py \
+    python twitter_downloader.py \
         -c "path/to/twitter/credential/file" \
         -s "path/to/twitter/setting/file" \
         -o "path/to/output/directory"
@@ -26,8 +26,8 @@ from utils import color, io, string # pylint: disable=import-error
 
 # Output filenames.
 USER_OUTPUT_FILENAME = 'user.json'
-TWEETS_OUTPUT_FILENAME = 'tweets.json'
-URLS_OUTPUT_FILENAME = 'urls.json'
+TWEETS_RAW_OUTPUT_FILENAME = 'tweets_raw.json'
+URLS_RAW_OUTPUT_FILENAME = 'urls_raw.json'
 
 
 def archive_tweets(path: str) -> tuple[dict, str]:
@@ -213,7 +213,7 @@ def get_tweets(
 
 
 def get_urls(user: dict, tweets: dict) -> dict:
-    """Gets unique URLs in user info and Tweets.
+    """Gets URLs in user info and Tweets.
     
     Parameters
     ----------
@@ -225,7 +225,7 @@ def get_urls(user: dict, tweets: dict) -> dict:
     Returns
     -------
     dict:
-        Mappings from unique URLs to their local download destinations.
+        Mappings from URLs to their local download destinations.
         Format:
         {
             str('URL.'): str('Local download destination.')
@@ -343,7 +343,7 @@ def get_user(client: Client, username: str, user_parameters: dict) -> dict:
     if profile.location:
         user['location'] = profile.location
     if profile.profile_image_url:
-        user['profile_image_url'] = string.replace_last(
+        user['profile_image_url'] = string.remove_last(
             profile.profile_image_url, '_normal')
     if profile.protected is not None:
         user['protected'] = profile.protected
@@ -368,24 +368,6 @@ def get_user(client: Client, username: str, user_parameters: dict) -> dict:
             if 'urls' in entities['description']:
                 user['description']['urls'] = description_url['urls']
     return user
-
-
-def _get_options() -> dict:
-    parser = argparse.ArgumentParser(
-        description='Downloads user info and tweets from Twitter.')
-    parser.add_argument(
-        '-c', '--credentials', default='configs/credentials.json', type=str, 
-        help='Path to Twitter credential file.')
-    parser.add_argument(
-        '-s', '--settings', default='configs/twitter.json', type=str, 
-        help='Path to Twitter setting file')
-    parser.add_argument(
-        '-o', '--output', default='../data/texts', type=str, 
-        help='Path to output directory.')
-    parser.add_argument(
-        '-t', '--test', action='store_true', default=False, 
-        help='Runs in test mode (early stop).')
-    return parser.parse_args()
 
 
 def _parse_tweet(response: Tweet) -> dict:
@@ -418,6 +400,24 @@ def _parse_tweet(response: Tweet) -> dict:
     return tweet
 
 
+def _get_options() -> dict:
+    parser = argparse.ArgumentParser(
+        description='Downloads user info and tweets from Twitter.')
+    parser.add_argument(
+        '-c', '--credentials', default='configs/credentials.json', type=str, 
+        help='Path to Twitter credential file.')
+    parser.add_argument(
+        '-s', '--settings', default='configs/twitter.json', type=str, 
+        help='Path to Twitter setting file')
+    parser.add_argument(
+        '-o', '--output', default='../data/texts', type=str, 
+        help='Path to output directory.')
+    parser.add_argument(
+        '-t', '--test', action='store_true', default=False, 
+        help='Runs in test mode (early stop).')
+    return parser.parse_args()
+
+
 if __name__ == '__main__':
     options = _get_options()
     io.make_directory(options.output)
@@ -446,7 +446,7 @@ if __name__ == '__main__':
 
     # Stage 2: Gets Tweets
     print(color.get_info(f"Fetching Tweet(s) of {username}..."))
-    tweets_path = io.join_paths(options.output, TWEETS_OUTPUT_FILENAME)
+    tweets_path = io.join_paths(options.output, TWEETS_RAW_OUTPUT_FILENAME)
     tweets, since_id = archive_tweets(tweets_path)
 
     # TODO: Gets Tweets older then the most recent 3200 ones.
@@ -470,12 +470,12 @@ if __name__ == '__main__':
     print()
 
     # Stage 3: Collects URLs
-    print(color.get_info(f'Collecting unique URLs...'))
+    print(color.get_info(f'Collecting URLs...'))
     urls = get_urls(user, tweets)
-    urls_path = io.join_paths(options.output, URLS_OUTPUT_FILENAME)
+    urls_path = io.join_paths(options.output, URLS_RAW_OUTPUT_FILENAME)
     archive_urls(urls_path)
     io.dump_json(urls, urls_path)
-    print(f"Saved {len(urls)} unique URLs to '{urls_path}'.")
+    print(f"Saved {len(urls)} URLs to '{urls_path}'.")
     print()
 
     print(color.get_ok('Done.'))

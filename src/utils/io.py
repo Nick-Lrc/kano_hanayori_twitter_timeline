@@ -1,12 +1,4 @@
-"""This module handles file IO.
-
-Supported file format(s):
-- JSON
-
-Usage example:
-    input = load_json('path/to/input')
-    dump_json(input, 'path/to/output')
-"""
+"""This module handles file IO."""
 
 import json
 import os

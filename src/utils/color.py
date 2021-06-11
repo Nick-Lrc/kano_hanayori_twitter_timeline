@@ -5,6 +5,7 @@ The color choices are based on text contexts:
 - Info: blue
 - OK: green
 - Warning: yellow
+- Highlight: cyan
 
 Usage example:
     info = get_info('some text here')
@@ -13,6 +14,7 @@ Usage example:
 class TextColor():
     """Prefixes and suffixes of colored texts."""
     BLUE = '\033[94m'
+    CYAN = '\033[96m'
     ENDC = '\033[0m'
     GREEN = '\033[92m'
     RED = '\033[91m'
@@ -32,6 +34,11 @@ def get_info(message: str) -> str:
 def get_ok(message: str) -> str:
     """Wraps text with color codes to represent an OK message."""
     return TextColor.GREEN + _add_suffix(message)
+
+
+def get_highlight(message: str) -> str:
+    """Wraps text with color codes to represent an highlight message."""
+    return TextColor.CYAN + _add_suffix(message)
 
 
 def get_warning(message: str) -> str:

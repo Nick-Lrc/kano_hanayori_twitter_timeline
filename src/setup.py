@@ -41,7 +41,8 @@ def install_packages(packages: list) -> None:
         [[name, location]] = package.items()
         print(f'({i + 1}/{len(packages)}) Installing {name}...')
 
-        result = shell.run(['pip', 'install', '-U', location])
+        result = shell.run(
+            ['pip', 'install', '-U', location], capture_output=True)
         if result.returncode:
             print(color.get_error(result.stderr.strip()))
             has_error = True

@@ -1,21 +1,17 @@
-"""This modules handles interactions with shell.
-
-Usage:
-    result = run_shell(['pip', 'install', '-U', 'pip'])
-"""
+"""This modules handles interactions with shell."""
 
 import subprocess
 from subprocess import CompletedProcess
 
 
-def run(command: list, capture_output: bool = True) -> CompletedProcess:
+def run(command: list, capture_output: bool = False) -> CompletedProcess:
     """Executes the shell command with utf-8 encoding.
     
     Parameters
     ----------
     command : list
         A shell command splitted by space.
-    capture_output: bool, defulat: True
+    capture_output: bool, defulat: False
         Whether to capture and return stdout and stderr strings.
 
     Returns

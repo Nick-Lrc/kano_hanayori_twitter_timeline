@@ -14,5 +14,17 @@
         "src/configs/twitter.json",
         "-o",
         "data/texts"
+    ],
+    [
+        "python",
+        "src/media_downloader.py",
+        "-i",
+        "data/texts/urls_raw.json",
+        "-s",
+        "src/configs/domains.json",
+        "-o",
+        "data/media",
+        "-x",
+        "data/texts"
     ]
 ]

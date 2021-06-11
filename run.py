@@ -22,10 +22,14 @@ def _run(commands: list) -> bool:
         print(f'[{i + 1}/{len(commands)}] Running {name}...')
         _print_horizontal_bar()
 
-        result = shell.run(command, capture_output=False)
+        result = shell.run(command)
         if result.returncode:
             return False
     return True
+
+
+def _print_horizontal_bar() -> None:
+    print('---')
 
 
 def _get_options() -> dict:
@@ -34,10 +38,6 @@ def _get_options() -> dict:
         '-i', '--input', default='src/configs/scripts.json', type=str, 
         help='Path to script config.')
     return parser.parse_args()
-
-
-def _print_horizontal_bar() -> None:
-    print('---')
 
 
 if __name__ == '__main__':
