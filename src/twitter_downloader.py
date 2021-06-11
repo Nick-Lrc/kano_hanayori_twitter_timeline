@@ -30,6 +30,59 @@ TWEETS_OUTPUT_FILENAME = 'tweets.json'
 URLS_OUTPUT_FILENAME = 'urls.json'
 
 
+def archive_tweets(path: str) -> tuple[dict, str]:
+    """Loads and archives the existing Tweets file. Extracts the since id as well.
+    
+    Parameters
+    ----------
+    path: str
+        Path to the Tweets file.
+
+    Returns
+    -------
+    dict:
+        Existing Tweets.
+    str:
+        Since id. Tells the Twitter client to returns results with a Tweet ID 
+        greater than (that is, more recent than) the specified 'since' Tweet ID.
+    """
+    tweets = {}
+    since_id = None
+    if os.path.isfile(path):
+        tweets = io.load_json(path)
+        if tweets:
+            since_id = str(sorted(tweets)[-1])
+            archive_path = io.archive_file(path)
+            print(f"Archived '{path}' to '{archive_path}'.")
+    return tweets, since_id
+
+
+def archive_urls(path: str) -> None:
+    """Archives the existing URLs file.
+
+    Parameters
+    ----------
+    path: str
+        Path to the URLs file.
+    """
+    if os.path.isfile(path):
+        archive_path = io.archive_file(path)
+        print(f"Archived '{path}' to '{archive_path}'.")
+
+
+def archive_user(path: str) -> None:
+    """Archives the existing user info file.
+    
+    Parameters
+    ----------
+    path: str
+        Path to the user info file.
+    """
+    if os.path.isfile(path):
+        archive_path = io.archive_file(path)
+        print(f"Archived '{path}' to '{archive_path}'.")
+
+
 def get_client(credentials: dict) -> Client:
     """Authenticates Twitter credentials.
 
@@ -62,7 +115,7 @@ def get_client(credentials: dict) -> Client:
 
 def get_tweets(
         client: Client, uid: int, tweet_parameters: dict, 
-        pagination_token: str = None) -> tuple[dict, str]:
+        pagination_token: str = None, since_id: str = None) -> tuple[dict, str]:
     """Fetches Tweets.
 
     Note that the client returns up to the most recent 3200 Tweets.
@@ -137,13 +190,17 @@ def get_tweets(
     response = client.get_users_tweets(
         uid, user_auth=True, max_results=tweet_parameters['max_results'], 
         pagination_token=pagination_token,
+        since_id=since_id,
         tweet_fields=tweet_parameters['tweet_fields'])
-    if not response or not response.data:
+    if not response:
         raise TypeError('Failed to fetch Tweets.')
+    if not response.data:
+        print(color.get_warning(f'WARNING: No (new) Tweets fetched.'))
+        return tweets, None
 
     for tweet_response in response.data:
         tweet = _parse_tweet(tweet_response)
-        tweets[tweet['id']] = tweet
+        tweets[str(tweet['id'])] = tweet
 
     if 'next_token' in response.meta:
         pagination_token = response.meta['next_token']
@@ -370,7 +427,7 @@ if __name__ == '__main__':
     client = get_client(credentials)
     print()
 
-    # User info
+    # Stage 1: Gets user info
     print(color.get_info(f"Fetching user info of {username}..."))
     user = get_user(client, username, settings['user_parameters'])
 
@@ -379,37 +436,41 @@ if __name__ == '__main__':
         user['profile_banner_url'] = settings['profile_banner_url']
 
     user_path = io.join_paths(options.output, USER_OUTPUT_FILENAME)
+    archive_user(user_path)
     io.dump_json(user, user_path)
     print(f"Saved user info of {username} to '{user_path}'.")
     print()
 
-    # Tweets
-    print(color.get_info(f"Fetching tweet(s) of {username}..."))
+    # Stage 2: Gets Tweets
+    print(color.get_info(f"Fetching Tweet(s) of {username}..."))
+    tweets_path = io.join_paths(options.output, TWEETS_OUTPUT_FILENAME)
+    tweets, since_id = archive_tweets(tweets_path)
 
     # TODO: Gets Tweets older then the most recent 3200 ones.
-    tweets, pagination_token = get_tweets(
-        client, user['id'], settings['tweet_parameters'])
+    new_tweets, pagination_token = get_tweets(
+        client, user['id'], settings['tweet_parameters'], since_id=since_id)
+    tweets.update(new_tweets)
     print(f'Fetched {len(tweets)} tweets.')
 
     while pagination_token:
         new_tweets, pagination_token = get_tweets(
             client, user['id'], settings['tweet_parameters'], 
-            pagination_token=pagination_token)
+            pagination_token=pagination_token, since_id=since_id)
         tweets.update(new_tweets)
         print(f'Fetched {len(tweets)} tweets.')
 
         if options.test:
             break
 
-    tweets_path = io.join_paths(options.output, TWEETS_OUTPUT_FILENAME)
     io.dump_json(tweets, tweets_path)
     print(f"Saved {len(tweets)} tweets of {username} to '{tweets_path}'.")
     print()
 
-    # URLs
+    # Stage 3: Collects URLs
     print(color.get_info(f'Collecting unique URLs...'))
     urls = get_urls(user, tweets)
     urls_path = io.join_paths(options.output, URLS_OUTPUT_FILENAME)
+    archive_urls(urls_path)
     io.dump_json(urls, urls_path)
     print(f"Saved {len(urls)} unique URLs to '{urls_path}'.")
     print()

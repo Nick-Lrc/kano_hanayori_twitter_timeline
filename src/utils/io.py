@@ -10,6 +10,28 @@ Usage example:
 
 import json
 import os
+import shutil
+
+
+def add_suffix(path: str, suffix: str) -> str:
+    """Adds a suffix to the path before the last extension."""
+    norm_path, ext = os.path.splitext(os.path.normpath(path))
+    return norm_path + suffix + ext
+
+
+def archive_file(path: str, archive: str = 'arc') -> str:
+    """Archives the file by copying it into the given directory."""
+    if not os.path.isfile(path):
+        raise OSError(f'{path} is not a file.')
+
+    src = os.path.normpath(path)
+    parent = os.path.dirname(src)
+    filename = os.path.basename(src)
+    archive_path = os.path.normpath(os.path.join(parent, archive))
+    make_directory(archive_path)
+    dst = os.path.join(archive_path, filename)
+    shutil.copy(src, dst)
+    return dst
 
 
 def dump_json(obj: dict, path: str, sorted_keys: bool = True) -> None:
@@ -27,6 +49,7 @@ def load_json(path: str) -> dict:
 def join_paths(parent: str, child: str) -> str:
     """Joins the parent and child paths together."""
     return os.path.normpath(os.path.join(parent, child))
+
 
 def make_directory(path: str) -> str:
     """Creates the directory and its parents if necessary."""
