@@ -1,5 +1,11 @@
 """This scripts downloads media from collected URLs.
 
+The default 
+- Raw URLs file locates at '../data/texts/urls_raw.json'.
+- Domains config file locates at 'configs/domains.json'.
+- Output media directory locates at '../data/media'.
+- Output texts directory locates at '../data/texts'.
+
 Example usage:
     python media_downloader.py \
         -i "path/to/the/urls_raw/file" \
@@ -22,7 +28,7 @@ URL_OUTPUT_FILENAME = 'urls.json'
 def config_downloads(urls: dict, domains: dict) -> tuple[dict, dict]:
     """Configs media downloads.
 
-    Omits skipped URLs, maps URLs to the expanded ones, removes redundant tokens
+    Maps URLs to the expanded ones, omits skipped URLs, removes redundant tokens
     from URLs, and gets downloaders depending on URLs.
 
     Parameters
@@ -34,26 +40,29 @@ def config_downloads(urls: dict, domains: dict) -> tuple[dict, dict]:
             str('URL'): str('Local download directory.')
         }
     domains: dict
-        Contains domains of URLs to skip, expand/map, clean (redundancy), and
-        select downloaders. Domains of locally availabe media are also skipped.
+        Contains domains of URLs to expand/map, skip, clean (redundancy), and
+        select downloaders. Domains of locally available media should also be 
+        skipped during download. These local media are downloaded before the
+        target Twitter account went private. (If the account is still public,
+        leave the 'local' attribute empty in the domains config file.)
         Format:
-        {/photo/1
+        {
+            'map': {
+                str('A shortened URL'): str('The fully expanded URL.')
+            },
             'local': [
                 str('A domain of media already available locally. e.g. Twitter private accounts.')
             ],
             'skip': [
                 str('A domain that does not potentially contain media. e.g. Live streaming.')
             ],
-            'map': {
-                str('A shortened URL'): str('The fully expanded URL.')
-            },
             'redundant': {
                 str('A domain where its URLs may contain redundant parameters.'): [
                     str('A rundant parameter. e.g. /photo/1 in the end of a Twitter status.')
                 ]
             },
             'downloaders': {
-                'default': str('The default downloader'),
+                'default': str('The default downloader.'),
                 str('A domain that requires a specific downloader'): str('A specific downloader.')
             }
         }
@@ -67,21 +76,27 @@ def config_downloads(urls: dict, domains: dict) -> tuple[dict, dict]:
         {
             str('A processed URL'): {
                 'downloader': str('Specific downloader required to download the media.'),
-                'path': str('Output directory of each media.')
+                'path': str('Local dowload directory of the media.')
             }
         }
     dict
-        Maps each URL to its local download directory.
+        Maps each URL to its local download directory. Domains of locally 
+        available media are preserved, while skipped domains are removed.
     """
     skip_domains = set(domains['skip'])
-    skip_domains.update(domains['local'])
+    local_domains = set(domains['local'])
     urls_resolved = {}
     downloads = {}
 
     for url, path in sorted(urls.items()):
         url_download = url
-        if not _get_domain(url_download, skip_domains):
-            url_download = _map_domain(url_download, domains['map'])
+        url_download = _map_domain(url_download, domains['map'])
+        if _get_domain(url_download, skip_domains):
+            continue
+
+        if _get_domain(url_download, local_domains):
+            urls_resolved[url] = path
+        else:
             url_download = _clean_domain(url_download, domains['redundant'])
             downloader = _get_downloader(url_download, domains['downloaders'])
             
@@ -95,20 +110,26 @@ def config_downloads(urls: dict, domains: dict) -> tuple[dict, dict]:
 
 
 def download_media(downloader: str, url: str, dst: str) -> CompletedProcess:
-    """Download a piece of media.
+    """Downloads a piece of media.
 
     Parameters
     ----------
     downloader: str
-        A Tweet media downloader.
+        Represents a media downloader, either 'you-get' or 'youtube-dl'.
     url: str
-        URLS to download.
+        URL to download.
     dst: str
-        Local download directories.
+        Local download directory.
     
+    Returns
+    -------
+        The execution result including the following attribute:
+        - returncode: an integer representing the exit status.
+            0 indicates a success while 1 indicates an error.
+
     Raise
     -----
-        ValueError if unsupported downloaders.
+        ValueError if unsupported downloader.
     """
     if downloader == 'you-get':
         return shell.run([
@@ -183,6 +204,7 @@ if __name__ == '__main__':
     urls_raw = io.load_json(options.input)
     domains = io.load_json(options.settings)
 
+    # Stage 1: Configs downloads
     print(color.get_info('Configuring downloads...'))
     downloads, urls = config_downloads(urls_raw, domains)
     urls_path = io.join_paths(options.export, URL_OUTPUT_FILENAME)
@@ -193,6 +215,7 @@ if __name__ == '__main__':
     print(f"Saved {len(urls)} valid URLs to '{urls_path}''.")
     print()
 
+    # Stage 2: Downloads media
     print(color.get_info(f'{len(downloads)} media to download.'))
     error_count = 0
     for i, url in enumerate(downloads):
