@@ -137,6 +137,9 @@ def get_tweets(
         }
     pagination_token: str, default: None
         Token used to move forwards or backwards through 'pages' of results.
+    since_id: str, default: None
+        Tells the Twitter client to returns results with a Tweet ID greater than 
+        (that is, more recent than) the specified 'since' Tweet ID.
     
     Returns
     -------
