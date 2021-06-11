@@ -65,6 +65,8 @@ def get_tweets(
         pagination_token: str = None) -> tuple[dict, str]:
     """Fetches Tweets.
 
+    Note that the client returns up to the most recent 3200 Tweets.
+
     Parameters
     ----------
     client: Client
@@ -76,7 +78,6 @@ def get_tweets(
         Format:
         {
             'max_results': int('Specifies the number of Tweets to try and retrieve, up to a maximum of 100 per distinct request.'),
-            'until_id': str('Returns results with a Tweet ID less less than (that is, older than) the specified 'until' Tweet ID.'),
             'tweet_fields': [
                 str('Selects which specific Tweet fields will deliver in each returned Tweet object.')
             ]
@@ -126,16 +127,22 @@ def get_tweets(
                 }
             }
         }
+    
+    Raises
+    ------
+    TypeError
+        If cannot get Tweets response from the client.
     """
     tweets = {}
     response = client.get_users_tweets(
         uid, user_auth=True, max_results=tweet_parameters['max_results'], 
         pagination_token=pagination_token,
-        until_id=tweet_parameters['until_id'],
         tweet_fields=tweet_parameters['tweet_fields'])
+    if not response or not response.data:
+        raise TypeError('Failed to fetch Tweets.')
 
     for tweet_response in response.data:
-        tweet = _get_tweet(tweet_response)
+        tweet = _parse_tweet(tweet_response)
         tweets[tweet['id']] = tweet
 
     if 'next_token' in response.meta:
@@ -251,9 +258,17 @@ def get_user(client: Client, username: str, user_parameters: dict) -> dict:
             'tweet_count': int('Number of Tweets (including Retweets) posted by this user.')
             'username': str('The Twitter handle (screen name) of this user.'),
         }
+
+    Raises
+    ------
+    TypeError
+        If cannot get user response from the client.
     """
     response = client.get_user(
         username=username, user_fields=user_parameters['user_fields'])
+    if not response or not response.data:
+        raise TypeError(f'Failed to fetch user info.')
+    
     profile = response.data
     user = {
         'id': profile.id,
@@ -297,7 +312,7 @@ def get_user(client: Client, username: str, user_parameters: dict) -> dict:
 
 def _get_options() -> dict:
     parser = argparse.ArgumentParser(
-        description='Download user info and tweets from Twitter.')
+        description='Downloads user info and tweets from Twitter.')
     parser.add_argument(
         '-c', '--credentials', default='configs/credentials.json', type=str, 
         help='Path to Twitter credential file.')
@@ -307,10 +322,13 @@ def _get_options() -> dict:
     parser.add_argument(
         '-o', '--output', default='../data/texts', type=str, 
         help='Path to output directory.')
+    parser.add_argument(
+        '-t', '--test', action='store_true', default=False, 
+        help='Runs in test mode (early stop).')
     return parser.parse_args()
 
 
-def _get_tweet(response: Tweet) -> dict:
+def _parse_tweet(response: Tweet) -> dict:
     tweet = {
         'id': response.id,
         'text': {
@@ -362,10 +380,13 @@ if __name__ == '__main__':
 
     user_path = io.join_paths(options.output, USER_OUTPUT_FILENAME)
     io.dump_json(user, user_path)
-    print(f"Saved user info of {username} to '{user_path}'.\n")
+    print(f"Saved user info of {username} to '{user_path}'.")
+    print()
 
     # Tweets
     print(color.get_info(f"Fetching tweet(s) of {username}..."))
+
+    # TODO: Gets Tweets older then the most recent 3200 ones.
     tweets, pagination_token = get_tweets(
         client, user['id'], settings['tweet_parameters'])
     print(f'Fetched {len(tweets)} tweets.')
@@ -377,15 +398,20 @@ if __name__ == '__main__':
         tweets.update(new_tweets)
         print(f'Fetched {len(tweets)} tweets.')
 
+        if options.test:
+            break
+
     tweets_path = io.join_paths(options.output, TWEETS_OUTPUT_FILENAME)
     io.dump_json(tweets, tweets_path)
-    print(f"Saved {len(tweets)} tweets of {username} to '{tweets_path}'.\n")
+    print(f"Saved {len(tweets)} tweets of {username} to '{tweets_path}'.")
+    print()
 
     # URLs
     print(color.get_info(f'Collecting unique URLs...'))
     urls = get_urls(user, tweets)
     urls_path = io.join_paths(options.output, URLS_OUTPUT_FILENAME)
     io.dump_json(urls, urls_path)
-    print(f"Saved {len(urls)} unique URLs to '{urls_path}'.\n")
+    print(f"Saved {len(urls)} unique URLs to '{urls_path}'.")
+    print()
 
     print(color.get_ok('Done.'))

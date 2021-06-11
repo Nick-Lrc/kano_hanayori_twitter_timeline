@@ -14,7 +14,6 @@
     },
     "tweet_parameters": {
         "max_results": 100,
-        "until_id": null,
         "tweet_fields": [
             "created_at",
             "entities",

@@ -1,5 +1,4 @@
 # Media directory
-media/
 backup/
 test/
 refactor/
@@ -7,9 +6,6 @@ data/
 
 # Credentials
 src/configs/credentials.json
-
-# Test configs
-src/configs/test/
 
 # Issue fixing scripts
 media_refactor.py

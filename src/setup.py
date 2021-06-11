@@ -7,7 +7,6 @@ Usage example:
 """
 
 import argparse
-import sys
 
 from utils import color, io, shell # pylint: disable=import-error
 
@@ -30,9 +29,7 @@ def check_programs(programs: list) -> None:
             has_error = True
     print()
     if has_error:
-        message = 'Failed to find all required programs. Terminated.'
-        print(color.get_error(message))
-        sys.exit(1)
+        raise FileNotFoundError('Failed to find all required programs.')
 
 
 def install_packages(packages: list) -> None:
@@ -50,8 +47,7 @@ def install_packages(packages: list) -> None:
             has_error = True
     print()
     if has_error:
-        print(color.get_error('Failed to install all packages. Terminated.'))
-        sys.exit(1)
+        raise ModuleNotFoundError('Failed to install all packages.')
 
 
 def _get_options() -> dict:
