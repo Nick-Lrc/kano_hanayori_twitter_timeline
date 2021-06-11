@@ -43,7 +43,7 @@ def _print_horizontal_bar() -> None:
 if __name__ == '__main__':
     options = _get_options()
     commands = io.load_json(options.input)
-    
+
     success = _run(commands)
     _print_horizontal_bar()
     if success:
