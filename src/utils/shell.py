@@ -4,7 +4,7 @@ import subprocess
 from subprocess import CompletedProcess
 
 
-def run(command: list, capture_output: bool = False) -> CompletedProcess:
+def run(command: list, capture_output: bool = True) -> CompletedProcess:
     """Executes the shell command with utf-8 encoding.
     
     Parameters

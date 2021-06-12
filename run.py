@@ -22,7 +22,7 @@ def _run(commands: list) -> bool:
         print(f'[{i + 1}/{len(commands)}] Running {name}...')
         _print_horizontal_bar()
 
-        result = shell.run(command)
+        result = shell.run(command, capture_output=False)
         if result.returncode:
             return False
     return True

@@ -1,0 +1,20 @@
+{
+    "image": {
+        "min_width": 200,
+        "min_height": 200,
+        "formats": [
+            "gif",
+            "jpg",
+            "jpeg",
+            "png"
+        ]
+    },
+    "video": {
+        "thumbnail_cutoff": 0.15,
+        "formats": [
+            "mkv",
+            "mp4",
+            "webm"
+        ]
+    }
+}

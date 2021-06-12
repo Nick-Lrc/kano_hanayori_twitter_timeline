@@ -138,7 +138,7 @@ def download_media(downloader: str, url: str, dst: str) -> CompletedProcess:
             url,
             '-o', # Output directory
             dst
-        ])
+        ], capture_output=False)
     elif downloader == 'youtube-dl':
         return shell.run([
             'youtube-dl',
@@ -148,7 +148,7 @@ def download_media(downloader: str, url: str, dst: str) -> CompletedProcess:
             url,
             '-o', # Output filename template
             io.join_paths(dst, '%(title)s-%(id)s.%(ext)s')
-        ])
+        ], capture_output=False)
     else:
         raise ValueError(f"Unsupported downloader.")
 

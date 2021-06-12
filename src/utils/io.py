@@ -46,3 +46,9 @@ def join_paths(parent: str, child: str) -> str:
 def make_directory(path: str) -> str:
     """Creates the directory and its parents if necessary."""
     os.makedirs(os.path.normpath(path), exist_ok=True)
+
+
+def replace_extention(path: str, ext: str) -> str:
+    """Replaces the old extension with the new one."""
+    filename = os.path.splitext(os.path.normpath(path))[0]
+    return os.path.join(filename, ext)
