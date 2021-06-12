@@ -32,6 +32,8 @@
         "src/path_resolver.py",
         "-i",
         "data/texts/tweets_raw.json",
+        "-u",
+        "data/texts/user_raw.json",
         "-r",
         "data/texts/urls.json",
         "-s",

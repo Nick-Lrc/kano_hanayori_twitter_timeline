@@ -25,7 +25,7 @@ from utils import color, io, string # pylint: disable=import-error
 
 
 # Output filenames.
-USER_OUTPUT_FILENAME = 'user.json'
+USER_RAW_OUTPUT_FILENAME = 'user_raw.json'
 TWEETS_RAW_OUTPUT_FILENAME = 'tweets_raw.json'
 URLS_RAW_OUTPUT_FILENAME = 'urls_raw.json'
 
@@ -443,7 +443,7 @@ if __name__ == '__main__':
     if 'profile_banner_url' in settings:
         user['profile_banner_url'] = settings['profile_banner_url']
 
-    user_path = io.join_paths(options.output, USER_OUTPUT_FILENAME)
+    user_path = io.join_paths(options.output, USER_RAW_OUTPUT_FILENAME)
     archive_user(user_path)
     io.dump_json(user, user_path)
     print(f"Saved user info of {username} to '{user_path}'.")

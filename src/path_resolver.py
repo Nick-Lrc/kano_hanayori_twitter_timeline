@@ -1,28 +1,38 @@
 """This script resolves paths of media present in Tweets.
 
-Adds an additional 'media' attribute to Tweets with media URLs.
+Each media file will have a path object containing both the local and the remote paths. 
 Format:
 {
-    'media': [
+    'local': [
         {
-            'local': [
-                {
-                    'type': str('Media type, either video or image.'),
-                    'path': str('Local path to the media.'),
-                    'thumbnail': str('Local path to the video. This attributes only exist if the media is a video.')
-                }
-            ],
-            'remote': str('Remote URL of this media.')
+            'type': str('Media type, either video or image.'),
+            'path': str('Local path to the media.'),
+            'thumbnail': str('Local path to the video. For video files only.')
         }
-    ]
+    ],
+    'remote': str('Remote URL of this media.')
 }
+
+For the user info file, this script overwrites the 'profile_image_url' and the
+'profile_banner_url' with a path object.
+Change Example:
+    'profile_image_url': str('URL of the avatar.') -> obj('Path object of the avatar')
+
+For the Tweets file, this script adds a list of path objects under a new attribute
+named 'media'.
+Change Example:
+    'media': [
+        obj('Path object of a media file.')
+    ]
 
 The default
 - Raw Tweets file locates at '../data/texts/tweets_raw.json'.
+- Raw user file locates at '../data/texts/user_raw.json'.
 - Reference/URLs file locates at '../data/texts/urls.json'.
 - Media config file locates at 'configs/media.json'.
 - Input media data directory locates at '../data/media'.
-- Output texts directory locates at '../data/texts'. (To save path resolved Tweets.)
+- Output texts directory locates at '../data/texts'. (To save path resolved 
+  user info and Tweets.)
 
 For the final HTML file, the default media data directory is 'data/media'.
 Note that this path may be different to the input media data directory above.
@@ -31,6 +41,7 @@ The final HTML file by default locates at the project root directory.
 Example usage:
     python path_resolver.py \
         -i "path/to/the/raw/tweets/file" \
+        -u "path/to/the/raw/user/file" \
         -r "path/to/the/reference/urls/file" \
         -s "path/to/the/media/config/file" \
         -m "path/to/the/input/media/directory" \
@@ -50,11 +61,12 @@ from utils import color, html, io, string, video # pylint: disable=import-error
 
 # Output files
 TWEETS_OUTPUT_FILENAME = 'tweets.json'
+USER_OUTPUT_FILENAME = 'user.json'
 
 
-def get_media_paths(
+def get_tweets_media_paths(
         src: str, dst: str, video_settings: dict, image_settings: dict) -> list:
-    """Resolves paths to media.
+    """Resolves paths to Tweets media.
 
     Omits images whose dimensions are smaller than the ones in the settings.
     Finds paths to thumbails for video files as well. Media are sorted by their
@@ -100,7 +112,7 @@ def get_media_paths(
             {
                 'type': str('Media type, either video or image.'),
                 'path': str('Local path to the media.'),
-                'thumbnail': str('Local path to the video. This attributes only exist if the media is a video.')
+                'thumbnail': str('Local path to the video. For video files only.')
             }
         ]
     """
@@ -124,19 +136,53 @@ def get_media_paths(
         
     paths = get_video_paths(videos, images, video_settings['thumbnail'])
     paths.update(get_image_paths(images))
-
     new_parent = os.path.join(dst, os.path.basename(src))
-    paths_sorted = []
-    for _, path in sorted(paths.items()):
-        path_html = {
-            'type': path['type'],
-            'path': html.normalize_path(os.path.join(new_parent, path['path'])),
+    return sort_media_paths(new_parent, paths)
+
+
+def get_profile_image_path(src: str, dst: str, image_settings: dict) -> dict:
+    """Resolve path to a profile image.
+
+    A profile image may be an avatar or banner image.
+
+    Parameters
+    ----------
+    src: str
+        Parent directory of media.
+    dst: str
+        Destination directory of media relative in the final HTML.
+    image_settings: dict
+        Includes acceptable image dimensions and acceptable image extensions.
+        Format:
+        {
+            'min_width': int('Minimal acceptable image width.'),
+            'min_height': int('Minimal acceptable image height.'),
+            'extensions': [
+                str('An acceptable image extension. e.g. .png')
+            ]
         }
-        if path['type'] == 'video':
-            path_html['thumbnail'] = html.normalize_path(
-                os.path.join(new_parent, path['thumbnail']))
-        paths_sorted.append(path_html)
-    return paths_sorted
+    
+    Returns
+    -------
+    dict
+        Path to the latest profile image used in the final HTML.
+        Format:
+        {
+            'type': 'image',
+            'path': str('Local path to the profile image.')
+        }
+    """
+    image_extensions = set(image_settings['extensions'])
+    images = {}
+    for file in os.listdir(src):
+        extension = io.get_extension(file)
+        path = io.join_paths(src, file)
+        if extension in image_extensions:
+            images[io.get_filename(file)] = path
+
+    paths = get_image_paths(images)
+    new_parent = os.path.join(dst, os.path.basename(src))
+    return sort_media_paths(new_parent, paths)[-1]
 
 
 def get_image_paths(images: dict) -> dict:
@@ -236,6 +282,49 @@ def get_video_paths(
     return paths
 
 
+def sort_media_paths(dst: str, paths: dict) -> list:
+    """Sorts media paths by the modification time of each media file.
+    
+    Parameters
+    ----------
+    dst: str
+        Parent directory of the media files.
+    paths: dict
+        Mapping from modification time to local filenames of media.
+        Format:
+        {
+            'type': str('Media type, either video or image.'),
+            'path': str('Local video filename.')
+            'thumbnail': str('Local thumbnail filename. For video files only.')
+        }
+    
+    Returns
+    -------
+    list
+        Media paths sorted by the modification time of the media files. Each
+        path starts with the parent directory.
+        Format:
+        [
+            {
+                'type': str('Media type, either video or image.'),
+                'path': str('Local path to the media.'),
+                'thumbnail': str('Local path to the video. For video files only.')
+            }
+        ]
+    """
+    paths_sorted = []
+    for _, path in sorted(paths.items()):
+        path_html = {
+            'type': path['type'],
+            'path': html.normalize_path(os.path.join(dst, path['path'])),
+        }
+        if path['type'] == 'video':
+            path_html['thumbnail'] = html.normalize_path(
+                os.path.join(dst, path['thumbnail']))
+        paths_sorted.append(path_html)
+    return paths_sorted
+
+
 def _get_options() -> dict:
     parser = argparse.ArgumentParser(
         description='Maps URLs in Tweets to local paths if possible.')
@@ -243,8 +332,11 @@ def _get_options() -> dict:
         '-i', '--input', default='../data/texts/tweets_raw.json', type=str, 
         help='Path to the raw Tweets file.')
     parser.add_argument(
+        '-u', '--user', default='../data/texts/user_raw.json', type=str, 
+        help='Path to the user info file.')
+    parser.add_argument(
         '-r', '--references', default='../data/texts/urls.json', type=str, 
-        help='Path to the path reference/URLs file.') 
+        help='Path to the path reference/URLs file.')
     parser.add_argument(
         '-s', '--settings', default='configs/media.json', type=str, 
         help='Path to the media config file.')
@@ -267,9 +359,39 @@ if __name__ == '__main__':
     io.make_directory(options.output)
     tweets = io.load_json(options.input)
     urls = io.load_json(options.references)
+    user = io.load_json(options.user)
     settings = io.load_json(options.settings)
     video_settings = settings['video']
     image_settings = settings['image']
+
+    print(color.get_info(
+        f"Resolving paths to profile images of {user['username']}..."))
+    profile_image_url = user['profile_image_url']
+    local_directory = io.join_paths(options.media, urls[profile_image_url])
+    user['profile_image_url'] = {
+        'local': get_profile_image_path(
+            local_directory, options.export, image_settings),
+        'remote': profile_image_url
+    }
+
+    if 'profile_banner_url' in user:
+        profile_banner_url = user['profile_banner_url']
+        local_directory = io.join_paths(options.media, urls[profile_banner_url])
+        user['profile_banner_url'] = {
+            'local': get_profile_image_path(
+                local_directory, options.export, image_settings),
+            'remote': profile_banner_url
+        }
+    else:
+        print(color.get_warning(f'WARNING: Profile banner URL not found.'))
+    
+    user_path = io.join_paths(options.output, USER_OUTPUT_FILENAME)
+    if os.path.isfile(user_path):
+        archive_path = io.archive_file(user_path)
+        print(f"Archived '{user_path}' to '{archive_path}'.")
+    io.dump_json(user, user_path)
+    print(f"Saved path-resolved user info to '{user_path}'.")
+    print()
 
     print(color.get_info(f'Media paths of {len(tweets)} Tweets to resolve.'))
     for i, (tid, tweet) in enumerate(tweets.items()):
@@ -288,7 +410,7 @@ if __name__ == '__main__':
                     options.media, urls[expanded_url])
 
                 if os.path.isdir(local_directory):
-                    local_paths = get_media_paths(
+                    local_paths = get_tweets_media_paths(
                         local_directory, options.export, video_settings,
                         image_settings)
                     if 'media' not in tweet:
