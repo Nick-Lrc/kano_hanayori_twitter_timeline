@@ -26,5 +26,21 @@
         "data/media",
         "-x",
         "data/texts"
+    ],
+    [
+        "python",
+        "src/path_resolver.py",
+        "-i",
+        "data/texts/tweets_raw.json",
+        "-r",
+        "data/texts/urls.json",
+        "-s",
+        "src/configs/media.json",
+        "-m",
+        "data/media",
+        "-o",
+        "data/texts",
+        "-x",
+        "data/media"
     ]
 ]

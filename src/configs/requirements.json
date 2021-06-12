@@ -6,6 +6,7 @@
         {"pip": "pip"},
         {"tweepy": "git+https://github.com/tweepy/tweepy.git"},
         {"you-get": "you-get"},
-        {"youtube-dl": "youtube-dl"}
+        {"youtube-dl": "youtube-dl"},
+        {"pillow": "Pillow"}
     ]
 }

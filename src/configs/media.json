@@ -2,19 +2,51 @@
     "image": {
         "min_width": 200,
         "min_height": 200,
-        "formats": [
-            "gif",
-            "jpg",
-            "jpeg",
-            "png"
+        "extensions": [
+            ".apng",
+            ".avif",
+            ".bmp",
+            ".cur",
+            ".gif",
+            ".ico",
+            ".jpg",
+            ".jpeg",
+            ".jfif",
+            ".pjp",
+            ".pjpeg",
+            ".png",
+            ".svg",
+            ".webp"
         ]
     },
     "video": {
-        "thumbnail_cutoff": 0.15,
-        "formats": [
-            "mkv",
-            "mp4",
-            "webm"
+        "thumbnail": {
+            "cutoff": 0.15,
+            "suffix": "_thumb",
+            "extension": ".png"
+        },
+        "extensions": [
+            ".3gp",
+            ".3g2",
+            ".avi",
+            ".avchd",
+            ".mpg",
+            ".mp2",
+            ".m2v",
+            ".mpeg",
+            ".mpe",
+            ".mpv",
+            ".flv",
+            ".mkv",
+            ".mp4",
+            ".m4p",
+            ".m4v",
+            ".mov",
+            ".ogv",
+            ".ogg",
+            ".qt",
+            ".webm",
+            ".wmv"
         ]
     }
 }

@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 import re
 
-import io, shell # pylint: disable=import-error
+from . import io, shell # pylint: disable=import-error
 
 
 def create_thumbnail(src: str, dst: str, cutoff: float) -> None:

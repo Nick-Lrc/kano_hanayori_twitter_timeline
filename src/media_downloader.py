@@ -185,7 +185,9 @@ def _get_downloader(url: str, domains: dict) -> str:
 def _get_options() -> dict:
     parser = argparse.ArgumentParser(
         description='Downloads images and videos from URLs.')
-    parser.add_argument('-i', '--input', default='../data/texts/urls_raw.json')
+    parser.add_argument(
+        '-i', '--input', default='../data/texts/urls_raw.json', type=str, 
+        help='Path to the raw URLs file.')
     parser.add_argument(
         '-s', '--settings', default='configs/domains.json', type=str, 
         help='Path to the domain config file.')
@@ -229,6 +231,10 @@ if __name__ == '__main__':
         if result.returncode:
             error_count += 1
     print()
-    print(
-        color.get_error(f'Failure: {error_count}, ') + 
-        color.get_ok(f'Success: {len(downloads) - error_count}.'))
+    
+    messages = []
+    if error_count > 0:
+        messages.append(color.get_error(f'Failure: {error_count}'))
+    if len(downloads) - error_count > 0:
+        messages.append(color.get_ok(f'Success: {len(downloads) - error_count}'))
+    print(', '.join(messages) + '.')

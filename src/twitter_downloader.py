@@ -412,9 +412,14 @@ def _get_options() -> dict:
     parser.add_argument(
         '-o', '--output', default='../data/texts', type=str, 
         help='Path to output directory.')
+
+    # Testing arguments
     parser.add_argument(
-        '-t', '--test', action='store_true', default=False, 
-        help='Runs in test mode (early stop).')
+        '--early-stop', action='store_true', default=False, 
+        help='Test: Early stops during the Tweets download (after the 2nd page).')
+    parser.add_argument(
+        '--use-existing-tweets', action='store_true', default=False, 
+        help="Test: Skips the Tweets download. Uses existing Tweets for testing.")
     return parser.parse_args()
 
 
@@ -449,25 +454,30 @@ if __name__ == '__main__':
     tweets_path = io.join_paths(options.output, TWEETS_RAW_OUTPUT_FILENAME)
     tweets, since_id = archive_tweets(tweets_path)
 
-    # TODO: Gets Tweets older then the most recent 3200 ones.
-    new_tweets, pagination_token = get_tweets(
-        client, user['id'], settings['tweet_parameters'], since_id=since_id)
-    tweets.update(new_tweets)
-    print(f'Fetched {len(tweets)} tweets.')
-
-    while pagination_token:
+    if options.use_existing_tweets:
+        print(color.get_warning('Using existing Tweets.'))
+    else:
+        # TODO: Gets Tweets older then the most recent 3200 ones.
         new_tweets, pagination_token = get_tweets(
-            client, user['id'], settings['tweet_parameters'], 
-            pagination_token=pagination_token, since_id=since_id)
+            client, user['id'], settings['tweet_parameters'], since_id=since_id)
         tweets.update(new_tweets)
         print(f'Fetched {len(tweets)} tweets.')
 
-        if options.test:
-            break
+        while pagination_token:
+            new_tweets, pagination_token = get_tweets(
+                client, user['id'], settings['tweet_parameters'], 
+                pagination_token=pagination_token, since_id=since_id)
+            tweets.update(new_tweets)
+            print(f'Fetched {len(tweets)} tweets.')
 
-    io.dump_json(tweets, tweets_path)
-    print(f"Saved {len(tweets)} tweets of {username} to '{tweets_path}'.")
-    print()
+            if options.early_stop:
+                print(color.get_warning(
+                    'Early stop of Tweets download after the 2nd page.'))
+                break
+
+        io.dump_json(tweets, tweets_path)
+        print(f"Saved {len(tweets)} tweets of {username} to '{tweets_path}'.")
+        print()
 
     # Stage 3: Collects URLs
     print(color.get_info(f'Collecting URLs...'))

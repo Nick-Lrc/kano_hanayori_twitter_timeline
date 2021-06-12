@@ -17,9 +17,9 @@ def _run(commands: list) -> bool:
     print(color.get_info(f'{len(commands)} script(s) to run.'))
 
     for i, command in enumerate(commands):
-        name = command[1]
         _print_horizontal_bar()
-        print(f'[{i + 1}/{len(commands)}] Running {name}...')
+        print(color.get_highlight(
+            f"[{i + 1}/{len(commands)}] Running '{' '.join(command)}'..."))
         _print_horizontal_bar()
 
         result = shell.run(command, capture_output=False)

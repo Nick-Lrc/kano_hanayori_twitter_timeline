@@ -17,7 +17,9 @@
         "https://www.pixiv.net/",
         "https://m.youtube.com/channel/",
         "https://www.youtube.com/c/",
-        "https://www.youtube.com/channel/"
+        "https://www.youtube.com/channel/",
+        "https://youtube.com/channel/",
+        "https://www.amazon.co.jp/"
     ],
     "redundant": {
         "https://twitter.com/": [

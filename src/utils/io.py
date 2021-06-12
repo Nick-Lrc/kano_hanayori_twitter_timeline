@@ -11,6 +11,11 @@ def add_suffix(path: str, suffix: str) -> str:
     return norm_path + suffix + ext
 
 
+def has_suffix(path: str, suffix: str) -> str:
+    """Checks if the path has the suffix."""
+    return get_filename(path).endswith(suffix)
+
+
 def archive_file(path: str, archive: str = 'arc') -> str:
     """Archives the file by copying it into the given directory."""
     if not os.path.isfile(path):
@@ -32,6 +37,16 @@ def dump_json(obj: dict, path: str, sorted_keys: bool = True) -> None:
         json.dump(obj, f, ensure_ascii=False, indent=4, sort_keys=sorted_keys)
 
 
+def get_extension(path: str) -> str:
+    """Extracts the file extension."""
+    return os.path.splitext(os.path.normpath(path))[-1]
+
+
+def get_filename(path: str) -> str:
+    """Extracts the filename without extension."""
+    return os.path.splitext(os.path.normpath(path))[0]
+
+
 def load_json(path: str) -> dict:
     """Loads a JSON file with utf-8 encoding into a dictionary."""
     with open(os.path.normpath(path), 'r', encoding='utf-8') as f:
@@ -48,7 +63,6 @@ def make_directory(path: str) -> str:
     os.makedirs(os.path.normpath(path), exist_ok=True)
 
 
-def replace_extention(path: str, ext: str) -> str:
+def replace_extension(path: str, extension: str) -> str:
     """Replaces the old extension with the new one."""
-    filename = os.path.splitext(os.path.normpath(path))[0]
-    return os.path.join(filename, ext)
+    return get_filename(path) + extension
