@@ -1,0 +1,39 @@
+@import url('m_plus_rounded_1c.css');
+
+body {
+    background-color: #fffddc;
+    font-family: 'M PLUS Rounded 1c', sans-serif;
+}
+
+.container {
+    max-width: 768px;
+    width: 100%;
+}
+
+.avatar-profile {
+    max-width: 120px;
+    width: 100%;
+}
+
+.avatar {
+    max-width: 60px;
+    width: 100%;
+}
+
+.thumbnail {
+    display: inline-block;
+    position: relative;
+}
+
+.thumbnail span {
+    position: absolute; 
+    top: 50%; 
+    left: 50%; 
+    transform: translate(-50%,-50%); 
+    color: rgba(254, 79, 86, 0.75);
+    font-size: xx-large;
+}
+
+.media-body img {
+    width: 100%;
+}

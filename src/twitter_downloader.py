@@ -270,6 +270,7 @@ def get_user(client: Client, username: str, user_parameters: dict) -> dict:
         User info. Unset properties are excluded.
         Format:
         {
+            'birthday': str('Birthday of this user.')
             'created_at': str('Creation time of this account.'),
             'description': {
                 'content': str('The text of this user's profile description (also known as bio), if the user provided one.'),
@@ -439,9 +440,12 @@ if __name__ == '__main__':
     print(color.get_info(f"Fetching user info of {username}..."))
     user = get_user(client, username, settings['user_parameters'])
 
-    # TODO: Finds an automatic method to get the URL of the banner image.
+    # TODO: Finds an automatic method to get the URL of the banner image and
+    #       the birthday.
     if 'profile_banner_url' in settings:
         user['profile_banner_url'] = settings['profile_banner_url']
+    if 'birthday' in settings:
+        user['birthday'] = settings['birthday']
 
     user_path = io.join_paths(options.output, USER_RAW_OUTPUT_FILENAME)
     archive_user(user_path)

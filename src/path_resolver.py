@@ -1,16 +1,12 @@
 """This script resolves paths of media present in Tweets.
 
-Each media file will have a path object containing both the local and the remote paths. 
+Each media will have a path object containing both the local and the remote paths.
 Format:
 {
-    'local': [
-        {
-            'type': str('Media type, either video or image.'),
-            'path': str('Local path to the media.'),
-            'thumbnail': str('Local path to the video. For video files only.')
-        }
-    ],
-    'remote': str('Remote URL of this media.')
+    'type': str('Media type, either video or image.'),
+    'path': str('Local path to the media.'),
+    'url': str('Remote URL of this media.'),
+    'thumbnail': str('Local path to the video thumbnail. For video files only.')
 }
 
 For the user info file, this script overwrites the 'profile_image_url' and the
@@ -65,7 +61,8 @@ USER_OUTPUT_FILENAME = 'user.json'
 
 
 def get_tweets_media_paths(
-        src: str, dst: str, video_settings: dict, image_settings: dict) -> list:
+        src: str, dst: str, url: str, video_settings: dict,
+        image_settings: dict) -> list:
     """Resolves paths to Tweets media.
 
     Omits images whose dimensions are smaller than the ones in the settings.
@@ -75,9 +72,11 @@ def get_tweets_media_paths(
     Parameters
     ----------
     src: str
-        Parent directory of media.
+        Parent directory of the media.
     dst: str
         Destination directory of media relative in the final HTML.
+    url: str
+        Remote URL of the media.
     video_settings: dict
         Includes thumbnail settings and acceptable video extensions.
         Format:
@@ -112,7 +111,8 @@ def get_tweets_media_paths(
             {
                 'type': str('Media type, either video or image.'),
                 'path': str('Local path to the media.'),
-                'thumbnail': str('Local path to the video. For video files only.')
+                'url': str('Remote URL of the media'),
+                'thumbnail': str('Local path to the video thumbnail. For video files only.')
             }
         ]
     """
@@ -137,10 +137,11 @@ def get_tweets_media_paths(
     paths = get_video_paths(videos, images, video_settings['thumbnail'])
     paths.update(get_image_paths(images))
     new_parent = os.path.join(dst, os.path.basename(src))
-    return sort_media_paths(new_parent, paths)
+    return sort_media_paths(new_parent, url, paths)
 
 
-def get_profile_image_path(src: str, dst: str, image_settings: dict) -> dict:
+def get_profile_image_path(
+        src: str, dst: str, url: str, image_settings: dict) -> dict:
     """Resolve path to a profile image.
 
     A profile image may be an avatar or banner image.
@@ -151,6 +152,8 @@ def get_profile_image_path(src: str, dst: str, image_settings: dict) -> dict:
         Parent directory of media.
     dst: str
         Destination directory of media relative in the final HTML.
+    url: str
+        Remote URL of the image.
     image_settings: dict
         Includes acceptable image dimensions and acceptable image extensions.
         Format:
@@ -169,7 +172,8 @@ def get_profile_image_path(src: str, dst: str, image_settings: dict) -> dict:
         Format:
         {
             'type': 'image',
-            'path': str('Local path to the profile image.')
+            'path': str('Local path to the profile image.'),
+            'url': str('Remote URL of the media')
         }
     """
     image_extensions = set(image_settings['extensions'])
@@ -182,7 +186,7 @@ def get_profile_image_path(src: str, dst: str, image_settings: dict) -> dict:
 
     paths = get_image_paths(images)
     new_parent = os.path.join(dst, os.path.basename(src))
-    return sort_media_paths(new_parent, paths)[-1]
+    return sort_media_paths(new_parent, url, paths)[-1]
 
 
 def get_image_paths(images: dict) -> dict:
@@ -282,13 +286,15 @@ def get_video_paths(
     return paths
 
 
-def sort_media_paths(dst: str, paths: dict) -> list:
+def sort_media_paths(dst: str, url: str, paths: dict) -> list:
     """Sorts media paths by the modification time of each media file.
     
     Parameters
     ----------
     dst: str
         Parent directory of the media files.
+    url: str
+        Remote URLs of the media files.
     paths: dict
         Mapping from modification time to local filenames of media.
         Format:
@@ -308,7 +314,8 @@ def sort_media_paths(dst: str, paths: dict) -> list:
             {
                 'type': str('Media type, either video or image.'),
                 'path': str('Local path to the media.'),
-                'thumbnail': str('Local path to the video. For video files only.')
+                'url': str('Remote URL of the media'),
+                'thumbnail': str('Local path to the video thumbnail. For video files only.')
             }
         ]
     """
@@ -317,6 +324,7 @@ def sort_media_paths(dst: str, paths: dict) -> list:
         path_html = {
             'type': path['type'],
             'path': html.normalize_path(os.path.join(dst, path['path'])),
+            'url': url,
         }
         if path['type'] == 'video':
             path_html['thumbnail'] = html.normalize_path(
@@ -333,7 +341,7 @@ def _get_options() -> dict:
         help='Path to the raw Tweets file.')
     parser.add_argument(
         '-u', '--user', default='../data/texts/user_raw.json', type=str, 
-        help='Path to the user info file.')
+        help='Path to the raw user info file.')
     parser.add_argument(
         '-r', '--references', default='../data/texts/urls.json', type=str, 
         help='Path to the path reference/URLs file.')
@@ -368,20 +376,14 @@ if __name__ == '__main__':
         f"Resolving paths to profile images of {user['username']}..."))
     profile_image_url = user['profile_image_url']
     local_directory = io.join_paths(options.media, urls[profile_image_url])
-    user['profile_image_url'] = {
-        'local': get_profile_image_path(
-            local_directory, options.export, image_settings),
-        'remote': profile_image_url
-    }
+    user['profile_image_url'] = get_profile_image_path(
+        local_directory, options.export, profile_image_url, image_settings)
 
     if 'profile_banner_url' in user:
         profile_banner_url = user['profile_banner_url']
         local_directory = io.join_paths(options.media, urls[profile_banner_url])
-        user['profile_banner_url'] = {
-            'local': get_profile_image_path(
-                local_directory, options.export, image_settings),
-            'remote': profile_banner_url
-        }
+        user['profile_banner_url'] = get_profile_image_path(
+            local_directory, options.export, profile_banner_url, image_settings)
     else:
         print(color.get_warning(f'WARNING: Profile banner URL not found.'))
     
@@ -411,15 +413,12 @@ if __name__ == '__main__':
 
                 if os.path.isdir(local_directory):
                     local_paths = get_tweets_media_paths(
-                        local_directory, options.export, video_settings,
-                        image_settings)
-                    if 'media' not in tweet:
-                        tweet['media'] = []
-
-                    tweet['media'].append({
-                        'remote': expanded_url,
-                        'local': local_paths,
-                    })
+                        local_directory, options.export, expanded_url,
+                        video_settings,image_settings)
+                    if local_paths:
+                        if 'media' not in tweet:
+                            tweet['media'] = []
+                        tweet['media'].extend(local_paths)
                 seen_urls.add(expanded_url)
 
     tweets_path = io.join_paths(options.output, TWEETS_OUTPUT_FILENAME)

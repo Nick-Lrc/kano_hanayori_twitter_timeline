@@ -1,14 +1,14 @@
-# Media directory
+# Data directory
 backup/
 test/
 refactor/
 data/
 
+# Output HTML file
+index.html
+
 # Credentials
 src/configs/credentials.json
-
-# Issue fixing scripts
-media_refactor.py
 
 # vscode
 .vscode/

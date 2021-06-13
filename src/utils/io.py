@@ -31,6 +31,22 @@ def archive_file(path: str, archive: str = 'arc') -> str:
     return dst
 
 
+def exists(path: str) -> bool:
+    """Checks if the path exists."""
+    return os.path.exists(os.path.normpath(path))
+
+
+def open_text(path: str, mode: str = 'w') -> dict:
+    """Opens a text file with utf-8 encoding."""
+    return open(os.path.normpath(path), mode, encoding='utf-8')
+
+
+def load_json(path: str) -> dict:
+    """Loads a JSON file with utf-8 encoding into a dictionary."""
+    with open(os.path.normpath(path), 'r', encoding='utf-8') as f:
+        return json.load(f)
+
+
 def dump_json(obj: dict, path: str, sorted_keys: bool = True) -> None:
     """Dumps a dictionary to a JSON file with utf-8 encoding."""
     with open(os.path.normpath(path), 'w', encoding='utf-8') as f:
@@ -45,12 +61,6 @@ def get_extension(path: str) -> str:
 def get_filename(path: str) -> str:
     """Extracts the filename without extension."""
     return os.path.splitext(os.path.normpath(path))[0]
-
-
-def load_json(path: str) -> dict:
-    """Loads a JSON file with utf-8 encoding into a dictionary."""
-    with open(os.path.normpath(path), 'r', encoding='utf-8') as f:
-        return json.load(f)
 
 
 def join_paths(parent: str, child: str) -> str:
