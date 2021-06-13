@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 from datetime import datetime
 import os
+import re
 import urllib.parse
 
 from utils import color, io, string # pylint: disable=import-error
@@ -52,7 +53,8 @@ def write_footer(writer: HTMLWriter, footer: dict) -> None:
            .close_footer())
 
 
-def write_head(writer: HTMLWriter, title: str, settings: dict) -> None:
+def write_head(
+        writer: HTMLWriter, title: str, icon_path: str, settings: dict) -> None:
     """Writes the head.
 
     Parameters
@@ -61,6 +63,8 @@ def write_head(writer: HTMLWriter, title: str, settings: dict) -> None:
         An instance of HTMLWriter.
     title: str
         Webpage title.
+    icon_path: str
+        Path to the website icon.
     settings: dict
         HTML settings. Includes the charset and paths to the stylesheets and 
         javascripts.
@@ -84,7 +88,12 @@ def write_head(writer: HTMLWriter, title: str, settings: dict) -> None:
         writer.open_stylesheet(href=href)
     for src in settings['javascripts']:
         writer.open_javascript(src=src).close_javascript()
-    writer.open_title().write_inner_text(title).close_title().close_head()
+
+    (writer.open_title()
+           .write_inner_text(title)
+           .close_title()
+           .open_icon(href=icon_path)
+           .close_head())
 
 
 def write_tweet(
@@ -172,8 +181,8 @@ def write_media(
         Unique identifier of this Tweet. Included here to support accessibility
         in the image tag (alt).
     """
-    url = path['path']
-    image_path = url
+    image_path = path['path']
+    url = image_path
     media_type = path['type']
     if media_type == 'video':
         image_path = path['thumbnail']
@@ -260,16 +269,18 @@ def write_user(writer: HTMLWriter, user: dict) -> None:
 
     if 'following_count' in user and 'followers_count' in user:
         (writer.open_div(classes=['mt-3'])
-               .open_span(classes=['mr-3'])
+               .open_hyperlink(href=get_following_url(username), classes=['mr-3'])
                .open_span(classes=['font-weight-bold'])
                .write_inner_text(str(user['following_count']))
                .close_span()
                .write_inner_text(' Following')
-               .close_span()
+               .close_hyperlink()
+               .open_hyperlink(href=get_followers_url(username))
                .open_span(classes=['font-weight-bold'])
                .write_inner_text(str(user['followers_count']))
                .close_span()
                .write_inner_text(' Followers')
+               .close_hyperlink()
                .close_div())
     writer.close_div().close_div().close_div().close_div()
 
@@ -302,10 +313,14 @@ def write_paragraph(writer: HTMLWriter, paragraph: dict) -> None:
     cursor = 0
     for link in links:
         start = link['start']
+        # Avoid duplicated links.
+        if start < cursor:
+            continue
         end = link['end']
 
         # TODO: Uses the HTMLWriter to write '<br>' tags.
-        writer.write_inner_text(content[cursor:start].replace('\n', '<br>'))
+        text_before = content[cursor:start].replace('\n', '<br>')
+        writer.write_inner_text(_check_links(text_before))
         link_text = content[start:end]
         url = None
         if 'tag' in link:
@@ -315,11 +330,11 @@ def write_paragraph(writer: HTMLWriter, paragraph: dict) -> None:
         else:
             url = link['expanded_url']
             link_text = link['display_url']
-        
         writer.open_hyperlink(href=url).write_inner_text(link_text).close_hyperlink()
         cursor = end
     if cursor < len(content):
-        writer.write_inner_text(content[cursor:].replace('\n', '<br>'))
+        text_remain = content[cursor:].replace('\n', '<br>')
+        writer.write_inner_text(_check_links(text_remain))
     writer.close_paragraph()
 
 
@@ -340,7 +355,7 @@ def get_hashtag_url(hashtag: str) -> str:
     return f'https://twitter.com/search?q={escaped_hashtag}&src=hashtag_click'
 
 
-def get_follower_url(username: str) -> str:
+def get_followers_url(username: str) -> str:
     """Translates the username to the follower URL.
     
     Parameters
@@ -353,7 +368,7 @@ def get_follower_url(username: str) -> str:
     str
         URL linked to the follower list.
     """
-    return f'{get_profile_url(username)}/follower'
+    return f'{get_profile_url(username)}/followers'
 
 
 def get_following_url(username: str) -> str:
@@ -406,6 +421,34 @@ def get_status_url(username: str, tweet_id: tuple[int, str]) -> str:
     return f'{get_profile_url(username)}/status/{tweet_id}'
 
 
+def _check_links(text: str) -> str:
+    """Check if there are hashtags or mentions in the text.
+    
+    The Twitter API omits invalid mentions (and maybe hashtags as well). This
+    method identifies them and makes them look disabled.
+
+    Parameters
+    -------
+    text: str
+        Tweets content that may contain hashtags or mentions neglected by the API.
+    
+    Returns
+    -------
+    str
+        Link-resolved text.
+    """
+    tokens = set()
+    hashtags = re.findall(r'#\w+', text)
+    for hashtag in hashtags:
+        tokens.add(hashtag)
+    mentions = re.findall(r'@\w+', text)
+    for mention in mentions:
+        tokens.add(mention)
+    for token in tokens:
+        # TODO: Tells the HTMLWriter to write this span instead.
+        text = text.replace(token, f'<span class="text-secondary">{token}</span>')
+    return text
+
 def _get_options() -> None:
     parser = argparse.ArgumentParser(
         description='Parses the user info and Tweets to write a webpage.')
@@ -438,7 +481,9 @@ if __name__ == '__main__':
 
     print(f"Writing webpage of {user['username']}...")
     writer.write_doctype().open_html()
-    write_head(writer, user['friendly_name'], settings)
+    write_head(
+        writer, user['friendly_name'], user['profile_image_url']['path'], 
+        settings)
     writer.open_body().open_div(classes=['container'])
     write_user(writer, user=user)
     writer.open_div(classes=['mt-4'])
@@ -451,4 +496,5 @@ if __name__ == '__main__':
     write_footer(writer, settings['footer'])
     writer.close_body().close_html()
     print(f"Saved webpage of {user['username']} to '{webpage_path}'.")
+    print()
     print(color.get_ok('Done.'))

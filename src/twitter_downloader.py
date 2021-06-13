@@ -189,6 +189,8 @@ def get_tweets(
     TypeError
         If cannot get Tweets response from the client.
     """
+    # TODO: Gets complete original Tweets in Retweets. The Twitter API only
+    #       returns the first few lines of the original Tweets.
     tweets = {}
     response = client.get_users_tweets(
         uid, user_auth=True, max_results=tweet_parameters['max_results'], 

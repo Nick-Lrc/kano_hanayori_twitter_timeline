@@ -68,10 +68,18 @@ class HTMLWriter:
         return self._set_inline().open_tag(tag, classes=classes, **kwargs)
 
     def open_hyperlink(
-            self, href, target: str = '_blank', classes: list = [],
+            self, href: str, target: str = '_blank', classes: list = [],
             **kwargs: str) -> HTMLWriter:
         return self.open_inline_tag(
             'a', classes=classes, href=href, target=target, **kwargs)
+
+    def open_icon(
+            self, href: str, classes: list = [], **kwargs: str) -> HTMLWriter:
+        return (self.open_inline_tag(
+                        'link', classes=classes, rel='icon', href=href,
+                        type='image/icon type')
+                    .self_close_inline_tag()
+                    ._write_newline())
 
     def open_image(
             self, src: str, alt: str, classes: list = [],
@@ -81,7 +89,7 @@ class HTMLWriter:
                     .self_close_inline_tag())
 
     def open_javascript(
-            self, src: str, classes: list = [], **kwargs) -> HTMLWriter:
+            self, src: str, classes: list = [], **kwargs: str) -> HTMLWriter:
         return self.open_inline_tag('script', classes=classes, src=src, **kwargs)
 
     def open_meta(self, classes: list = [], **kwargs: str) -> HTMLWriter:
