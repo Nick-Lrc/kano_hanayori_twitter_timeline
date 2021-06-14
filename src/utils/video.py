@@ -6,6 +6,45 @@ import re
 from . import io, shell # pylint: disable=import-error
 
 
+def mkv_to_mp4(path: str) -> str:
+    """Converts a MKV video file to MP4.
+
+    A browser may not support MKV video files.
+
+    Parameters
+    ----------
+    path: str
+        Path to the MKV file.
+
+    Returns
+    -------
+    str
+        Path to the converted MP4 file.
+    
+    Raises
+    ------
+    ChildProcessError
+        If The FFmpeg cannot complete the conversion.
+    """
+    dst = io.replace_extension(path, '.mp4')
+    result = shell.run([
+        'ffmpeg',
+        '-hide_banner', # Suppresses printing banner.
+        '-loglevel', # Sets logging level and flags.
+        'error', # Shows all errors.
+        '-stats', # Print encoding progress/statistics.
+        '-y', # Overwrites output files without asking.
+        '-i', # Input file url.
+        path,
+        '-codec', # Select an encoder or a decoder.
+        'copy', # Indicate that the stream is not to be re-encoded.
+        dst
+    ], capture_output=False)
+    if result.returncode:
+        raise ChildProcessError(f"Conversion of '{path}' to MP4 failed.")
+    return dst
+
+
 def create_thumbnail(src: str, dst: str, cutoff: float) -> None:
     """Creates a video thumbnail.
 
@@ -42,7 +81,6 @@ def create_thumbnail(src: str, dst: str, cutoff: float) -> None:
         '1', # One frame for the thumbnail. Must be a str (not int) here.
         dst
     ])
-
     if result.returncode:
         raise ChildProcessError(result.stderr)
 

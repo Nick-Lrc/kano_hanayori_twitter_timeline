@@ -53,9 +53,19 @@ def dump_json(obj: dict, path: str, sorted_keys: bool = True) -> None:
         json.dump(obj, f, ensure_ascii=False, indent=4, sort_keys=sorted_keys)
 
 
+def has_extension(path: str, extension: str) -> bool:
+    """Whether or not the file has the given extension."""
+    return get_extension(path) == extension
+
+
 def get_extension(path: str) -> str:
     """Extracts the file extension."""
     return os.path.splitext(os.path.normpath(path))[-1]
+
+
+def replace_extension(path: str, extension: str) -> str:
+    """Replaces the old extension with the new one."""
+    return get_filename(path) + extension
 
 
 def get_filename(path: str) -> str:
@@ -71,8 +81,3 @@ def join_paths(parent: str, child: str) -> str:
 def make_directory(path: str) -> str:
     """Creates the directory and its parents if necessary."""
     os.makedirs(os.path.normpath(path), exist_ok=True)
-
-
-def replace_extension(path: str, extension: str) -> str:
-    """Replaces the old extension with the new one."""
-    return get_filename(path) + extension

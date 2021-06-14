@@ -424,8 +424,9 @@ def get_status_url(username: str, tweet_id: tuple[int, str]) -> str:
 def _check_links(text: str) -> str:
     """Check if there are hashtags or mentions in the text.
     
-    The Twitter API omits invalid mentions (and maybe hashtags as well). This
-    method identifies them and makes them look disabled.
+    The Twitter API omits mentions (and maybe hashtags as well) that are
+    invalid or contained in a Retweet. This method identifies them and makes 
+    them clickable.
 
     Parameters
     -------
@@ -437,16 +438,17 @@ def _check_links(text: str) -> str:
     str
         Link-resolved text.
     """
-    tokens = set()
+    tokens = {}
     hashtags = re.findall(r'#\w+', text)
     for hashtag in hashtags:
-        tokens.add(hashtag)
+        tokens[hashtag] = get_hashtag_url(hashtag)
     mentions = re.findall(r'@\w+', text)
     for mention in mentions:
-        tokens.add(mention)
-    for token in tokens:
-        # TODO: Tells the HTMLWriter to write this span instead.
-        text = text.replace(token, f'<span class="text-secondary">{token}</span>')
+        username = mention[1:]
+        tokens[mention] = get_profile_url(username)
+    for token, url, in tokens.items():
+        # TODO: Tells the HTMLWriter to write this hyperlink instead.
+        text = text.replace(token, f'<a href={url} target="_blank">{token}</a>')
     return text
 
 def _get_options() -> None:

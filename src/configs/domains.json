@@ -19,7 +19,8 @@
         "https://www.youtube.com/c/",
         "https://www.youtube.com/channel/",
         "https://youtube.com/channel/",
-        "https://www.amazon.co.jp/"
+        "https://www.amazon.co.jp/",
+        "https://store.line.me/"
     ],
     "redundant": {
         "https://twitter.com/": [

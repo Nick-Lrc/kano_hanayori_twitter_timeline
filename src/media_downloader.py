@@ -10,8 +10,9 @@ Example usage:
     python media_downloader.py \
         -i "path/to/the/urls_raw/file" \
         -s "path/to/the/domains/config/file" \
-        -o "path/to/the/media/output/directory"\
-        -x "path/to/the/texts/output/directory"
+        -o "path/to/the/media/output/directory" \
+        -x "path/to/the/texts/output/directory" \
+        --skip-existing-directroies
 """
 
 from __future__ import annotations
@@ -23,6 +24,9 @@ from utils import color, io, shell, string # pylint: disable=import-error
 
 
 URL_OUTPUT_FILENAME = 'urls.json'
+
+# Profile images may get updated.
+PROFILE_IMAGE_DIRECTORIES = ('avatar', 'banner')
 
 
 def config_downloads(urls: dict, domains: dict) -> tuple[dict, dict]:
@@ -144,7 +148,6 @@ def download_media(downloader: str, url: str, dst: str) -> CompletedProcess:
             'youtube-dl',
             '-i', # Continues on download errors
             '-w', # No overwrite
-            '--write-thumbnail', # Downloads the thumbnail. Same filename.
             url,
             '-o', # Output filename template
             io.join_paths(dst, '%(title)s-%(id)s.%(ext)s')
@@ -197,6 +200,9 @@ def _get_options() -> dict:
     parser.add_argument(
         '-x', '--export', default='../data/texts', type=str, 
         help='Path to the texts output directory.')
+    parser.add_argument(
+        '--skip-existing-directroies', action='store_true', default=False, 
+        help='Skips existing directories without checking files inside.')
     return parser.parse_args()
 
 
@@ -220,12 +226,20 @@ if __name__ == '__main__':
     # Stage 2: Downloads media
     print(color.get_info(f'{len(downloads)} media to download.'))
     error_count = 0
+    skip_count = 0
     for i, url in enumerate(downloads):
         downloader = downloads[url]['downloader']
         dst = io.join_paths(options.output, downloads[url]['path'])
         print(color.get_highlight(
             f"({i + 1}/{len(downloads)}) "
             f"Downloding media from '{url}' to '{dst}'..."))
+
+        if (options.skip_existing_directroies and 
+                os.path.isdir(dst) and 
+                not dst.endswith(PROFILE_IMAGE_DIRECTORIES)):
+            print(f"Skips download as '{dst}' exists.")
+            skip_count += 1
+            continue
 
         result = download_media(downloader, url, dst)
         if result.returncode:
@@ -235,6 +249,9 @@ if __name__ == '__main__':
     messages = []
     if error_count > 0:
         messages.append(color.get_error(f'Failure: {error_count}'))
-    if len(downloads) - error_count > 0:
-        messages.append(color.get_ok(f'Success: {len(downloads) - error_count}'))
+    if skip_count > 0:
+        messages.append(color.get_warning(f'Skip: {skip_count}'))
+    success_count = len(downloads) - error_count - skip_count
+    if success_count > 0:
+        messages.append(color.get_ok(f'Success: {success_count}'))
     print(', '.join(messages) + '.')

@@ -52,7 +52,7 @@ import os
 from PIL import Image
 import shutil
 
-from utils import color, html, io, string, video # pylint: disable=import-error
+from utils import color, html, io, shell, video # pylint: disable=import-error
 
 
 # Output files
@@ -62,7 +62,7 @@ USER_OUTPUT_FILENAME = 'user.json'
 
 def get_tweets_media_paths(
         src: str, dst: str, url: str, video_settings: dict,
-        image_settings: dict) -> list:
+        image_settings: dict, keep_thumbnails: bool) -> list:
     """Resolves paths to Tweets media.
 
     Omits images whose dimensions are smaller than the ones in the settings.
@@ -100,6 +100,8 @@ def get_tweets_media_paths(
                 str('An acceptable image extension. e.g. .png')
             ]
         }
+    keep_thumbnails: bool
+        Whether or not to keep existing thumbnails.
 
     Returns
     -------
@@ -119,22 +121,22 @@ def get_tweets_media_paths(
     video_extensions = set(video_settings['extensions'])
     image_extensions = set(image_settings['extensions'])
 
-    videos = {}
-    images = {}
+    videos = []
+    images = []
     for file in os.listdir(src):
         extension = io.get_extension(file)
         path = io.join_paths(src, file)
 
         if extension in video_extensions:
-            videos[io.get_filename(file)] = path
+            videos.append(path)
         elif (extension in image_extensions and 
                 not io.has_suffix(file, video_settings['thumbnail']['suffix'])):
             width, height = Image.open(path).size
             if (width >= image_settings['min_width'] and 
                     height >= image_settings['min_height']):
-                images[io.get_filename(file)] = path
+                images.append(path)
         
-    paths = get_video_paths(videos, images, video_settings['thumbnail'])
+    paths = get_video_paths(videos, video_settings['thumbnail'], keep_thumbnails)
     paths.update(get_image_paths(images))
     new_parent = os.path.join(dst, os.path.basename(src))
     return sort_media_paths(new_parent, url, paths)
@@ -177,25 +179,25 @@ def get_profile_image_path(
         }
     """
     image_extensions = set(image_settings['extensions'])
-    images = {}
+    images = []
     for file in os.listdir(src):
         extension = io.get_extension(file)
         path = io.join_paths(src, file)
         if extension in image_extensions:
-            images[io.get_filename(file)] = path
+            images.append(path)
 
     paths = get_image_paths(images)
     new_parent = os.path.join(dst, os.path.basename(src))
     return sort_media_paths(new_parent, url, paths)[-1]
 
 
-def get_image_paths(images: dict) -> dict:
+def get_image_paths(images: list) -> dict:
     """Resolves paths to images.
 
     Parameters
     ----------
-    images: dict
-        Maps image filenames (no extension) to local image paths.
+    images: list
+        Local paths to image files.
     
     Returns
     -------
@@ -208,7 +210,7 @@ def get_image_paths(images: dict) -> dict:
         }
     """
     paths = {}
-    for _, image_path in images.items():
+    for image_path in images:
         modification_time = os.path.getmtime(image_path)
         paths[modification_time] = {
             'type': 'image',
@@ -218,29 +220,29 @@ def get_image_paths(images: dict) -> dict:
 
 
 def get_video_paths(
-        videos: dict, images: dict, thumbnail_settings: dict) -> dict:
+        videos: list, thumbnail_settings: dict, keep_thumbnails: bool) -> dict:
     """Resolves paths to videos and their thumbnails.
     
-    For each video, youtube-dl downloads a thumbnail having the same name (you-get
-    does not). To make thumbnails easily recognizable, all of them should have a 
-    common suffix. If a thumbnail does not exist, FFmpeg will extract a frame
-    from the video as a thumbnail.
+    Converts MKVs to MP4s so the video file to ensure browser support. To make 
+    thumbnails easily recognizable, all of them should have a common suffix. If 
+    a thumbnail does not exist, FFmpeg will extract a frame from the video as a 
+    thumbnail.
 
     Parameters
     ----------
-    videos: dict
-        Maps video filenames (no extension) to local video paths.
-    images: dict
-        Maps image filenames (no extension) to local image paths.
+    videos: list
+        Local paths to video files.
     thumbnail_settings: dict
-        Includes the thumbnail cutoff ratio in video files along with common 
-        suffix and extension of thumbnails.
+        Includes the thumbnail cutoff ratio in video files, thumbnail filename 
+        suffix and export format.
         Format:
         {
             'cutoff': float('Cutoff ratio of video files to extract thumbnails. e.g. 0.1 means getting thumbnails at the 10% position of videos.'),
             'suffix': str('Common thumbnail suffix. e.g. _thumb'),
             'extension': str('Common thumbnail extension. e.g. .png')
         }
+    keep_thumbnails: bool
+        Whether or not to keep existing thumbnails.
 
     Returns
     -------
@@ -254,25 +256,32 @@ def get_video_paths(
         }
     """
     paths = {}
-    for video_name, video_path in videos.items():
-        thumbnail_path = None
-
-        for image_name, image_path in images.items():
-            if image_name == video_name:
-                thumbnail_path = io.add_suffix(
-                    image_path, thumbnail_settings['suffix'])
-                shutil.move(image_path, thumbnail_path)
-                break
-
-        if thumbnail_path:
-            del images[video_name]
+    for video_path in videos:
+        # TODO: Checks for other video formats.
+        if io.has_extension(video_path, '.mkv'):
+            print(f"MKV detected. Converting '{video_path}' to MP4...")
+            try:
+                new_video_path = video.mkv_to_mp4(video_path)
+                os.remove(video_path)
+                print(
+                    f"Saved converted MP4 to '{new_video_path}'. "
+                    'Original MKV removed.')
+                video_path = new_video_path
+            except ChildProcessError as err:
+                print(color.get_error(str(err)))
+        
+        thumbnail_path = io.add_suffix(
+            io.replace_extension(video_path, thumbnail_settings['extension']),
+            thumbnail_settings['suffix'])
+        
+        if keep_thumbnails and os.path.isfile(thumbnail_path):
+            print(f"Uses existing thumbnail '{thumbnail_path}'.")
         else:
-            thumbnail_path = io.add_suffix(
-                io.replace_extension(video_path, thumbnail_settings['extension']),
-                thumbnail_settings['suffix'])
+            print(f"Creating a thumbnail of '{video_path}'...")
             try:
                 video.create_thumbnail(
                     video_path, thumbnail_path, thumbnail_settings['cutoff'])
+                print(f"Saved the thumbnail to '{thumbnail_path}'.")
             except ChildProcessError as err:
                 print(color.get_error(str(err)))
                 continue
@@ -359,6 +368,9 @@ def _get_options() -> dict:
         '-x', '--export', default='data/media', type=str, 
         help='Path to the media directory relative to the final HTML file.'
              'The HTML file by default locates at the project root directory.')
+    parser.add_argument(
+        '--keep-thumbnails', action='store_true', default=False, 
+        help='Keeps existing thumbnails.')
     return parser.parse_args()
 
 
@@ -372,6 +384,7 @@ if __name__ == '__main__':
     video_settings = settings['video']
     image_settings = settings['image']
 
+    # Stage 1: Resolves paths to the avatar and the profile banner images.
     print(color.get_info(
         f"Resolving paths to profile images of {user['username']}..."))
     profile_image_url = user['profile_image_url']
@@ -395,14 +408,15 @@ if __name__ == '__main__':
     print(f"Saved path-resolved user info to '{user_path}'.")
     print()
 
+    # Stage 2: Resolves paths to images and video files attached to Tweets.
     print(color.get_info(f'Media paths of {len(tweets)} Tweets to resolve.'))
     for i, (tid, tweet) in enumerate(tweets.items()):
         text = tweet['text']
         if 'urls' not in text:
             continue
 
-        print(
-            f'({i + 1}/{len(tweets)}) Resolving media paths of Tweet #{tid}...')
+        print(color.get_highlight(
+            f'({i + 1}/{len(tweets)}) Resolving media paths of Tweet #{tid}...'))
         # Removes duplicated URLs within the same Tweet
         seen_urls = set()
         for url in text['urls']:
@@ -410,11 +424,11 @@ if __name__ == '__main__':
             if (expanded_url in urls) and (expanded_url not in seen_urls):
                 local_directory = io.join_paths(
                     options.media, urls[expanded_url])
-
+                
                 if os.path.isdir(local_directory):
                     local_paths = get_tweets_media_paths(
                         local_directory, options.export, expanded_url,
-                        video_settings,image_settings)
+                        video_settings, image_settings, options.keep_thumbnails)
                     if local_paths:
                         if 'media' not in tweet:
                             tweet['media'] = []
