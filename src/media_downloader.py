@@ -12,7 +12,7 @@ Example usage:
         -s "path/to/the/domains/config/file" \
         -o "path/to/the/media/output/directory" \
         -x "path/to/the/texts/output/directory" \
-        --skip-existing-directroies
+        --skip-existing-directories
 """
 
 from __future__ import annotations
@@ -201,7 +201,7 @@ def _get_options() -> dict:
         '-x', '--export', default='../data/texts', type=str, 
         help='Path to the texts output directory.')
     parser.add_argument(
-        '--skip-existing-directroies', action='store_true', default=False, 
+        '--skip-existing-directories', action='store_true', default=False, 
         help='Skips existing directories without checking files inside.')
     return parser.parse_args()
 
@@ -234,7 +234,7 @@ if __name__ == '__main__':
             f"({i + 1}/{len(downloads)}) "
             f"Downloding media from '{url}' to '{dst}'..."))
 
-        if (options.skip_existing_directroies and 
+        if (options.skip_existing_directories and 
                 os.path.isdir(dst) and 
                 not dst.endswith(PROFILE_IMAGE_DIRECTORIES)):
             print(f"Skips download as '{dst}' exists.")

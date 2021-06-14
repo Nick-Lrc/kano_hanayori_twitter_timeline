@@ -26,7 +26,7 @@
         "data/media",
         "-x",
         "data/texts",
-        "--skip-existing-directroies"
+        "--skip-existing-directories"
     ],
     [
         "python",
