@@ -1,0 +1,14 @@
+[
+    [
+        "python",
+        "src/webpage_writer.py",
+        "-i",
+        "data/texts/tweets.json",
+        "-u",
+        "data/texts/user.json",
+        "-s",
+        "src/configs/html.json",
+        "-o",
+        "."
+    ]
+]

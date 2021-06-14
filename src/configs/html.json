@@ -1,0 +1,16 @@
+{
+    "charset": "utf-8",
+    "stylesheets": [
+        "src/styles/css/bootstrap.min.css",
+        "src/styles/css/custom.css"
+    ],
+    "javascripts": [
+        "src/styles/js/jquery.min.js",
+        "src/styles/js/popper.min.js",
+        "src/styles/js/bootstrap.min.js"
+    ],
+    "footer": {
+        "inner_text": "まほろ",
+        "url": "https://twitter.com/kanomahoro"
+    }
+}
