@@ -111,8 +111,8 @@ def write_tweet(
         Tweets. See twitter_downloader.get_tweets() and the script comment of
         path_resolver for the format.
     use_remote_video: bool
-        Whether or not to use remote URLs instead of local paths. Affects video
-        files only.
+        Whether or not to map video files to their remote URLs instead of their
+        local paths.
     """
     username = user['username']
     avatar_path = user['profile_image_url']['path']
@@ -175,15 +175,16 @@ def write_media(
     classes: list
         Image tag classes.
     use_remote_video: bool
-        Whether or not to use remote URLs instead of local paths. Affects video
-        files only.
+        Whether or not to map video files to their remote URLs instead of their
+        local paths.
     tweet_id: bool
         Unique identifier of this Tweet. Included here to support accessibility
         in the image tag (alt).
     """
     image_path = path['path']
-    url = image_path
+    url = path['path']
     media_type = path['type']
+
     if media_type == 'video':
         image_path = path['thumbnail']
         writer.open_div(classes=['thumbnail'])
@@ -468,7 +469,7 @@ def _get_options() -> None:
         help='Path to output directory.')
     parser.add_argument(
         '--use-remote-video', action='store_true', default=False, 
-        help='Links each thumbnail to its remote URL instead of its local path.')
+        help='Maps video files to their remote URLs instead of their local path.')
     return parser.parse_args()
 
 

@@ -81,3 +81,21 @@ def join_paths(parent: str, child: str) -> str:
 def make_directory(path: str) -> str:
     """Creates the directory and its parents if necessary."""
     os.makedirs(os.path.normpath(path), exist_ok=True)
+
+
+def has_parent(path: str, parent: str) -> bool:
+    """Checks if the path has the given parent directory."""
+    return os.path.normpath(parent) in os.path.normpath(path)
+
+
+def remove_parent(path: str, parent: str) -> str:
+    """Removes the parent directory from the path."""
+    return replace_parent(path, parent, '')
+
+
+def replace_parent(path: str, old: str, new: str) -> str:
+    """Replaces the old directory in the path with the new one."""
+    path = os.path.normpath(path)
+    old = os.path.normpath(old)
+    new = os.path.normpath(new)
+    return os.path.normpath(path.replace(old, new, 1))

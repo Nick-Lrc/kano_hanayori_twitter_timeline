@@ -1,0 +1,28 @@
+[
+    [
+        "python",
+        "src/webpage_writer.py",
+        "-i",
+        "data/texts/tweets.json",
+        "-u",
+        "data/texts/user.json",
+        "-s",
+        "src/configs/html.json",
+        "-o",
+        ".",
+        "--use-remote-video"
+    ],
+    [
+        "python",
+        "src/export.py",
+        "-i",
+        ".",
+        "-r",
+        "src/configs/export.json",
+        "-s",
+        "src/configs/media.json",
+        "-x",
+        "../kano_hanayori_twitter",
+        "--use-remote-video"
+    ]
+]

@@ -1,10 +1,10 @@
 # Data directory
-backup/
-test/
-refactor/
 data/
 
-# Output HTML file
+# Test directory
+test/
+
+# Output file
 index.html
 
 # Credentials
