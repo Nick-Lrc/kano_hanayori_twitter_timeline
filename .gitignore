@@ -4,6 +4,9 @@ data/
 # Test directory
 test/
 
+# Refactor directory
+refactor/
+
 # Output file
 index.html
 
