@@ -1,10 +1,8 @@
 # @Kanolive_ Twitter Archive Workspace
 
----
-
 ## Introduction
 
-- This workspace includes the source codes of [Kano Hanayori - Twitter Archive](https://github.com/Nick-Lrc/kano_hanayori_twitter).
+- This workspace includes the source code of [Kano Hanayori - Twitter Archive](https://github.com/Nick-Lrc/kano_hanayori_twitter).
 - This project is initially designed to achive Twitter data of [Kanolive_](https://twitter.com/Kanolive_), but you can try it with different users.
   - You will need to modify `./src/config/twitter.json`.
 - Status
