@@ -38,6 +38,7 @@ python run.py
   - Writes `./index.html`.
 - To adjust the running configuration, see `./src/configs/scripts.json`.
 - `run.py` does not export the resulting work by default.
+  - Default export directory: `../kano_hanayori_twitter`
   - To export the work without video files **after** a regular run, use
 
 ```bash
