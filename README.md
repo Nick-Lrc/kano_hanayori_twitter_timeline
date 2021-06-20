@@ -15,11 +15,12 @@
   - [FFmpeg](https://www.ffmpeg.org/)
   - [Python](https://www.python.org/): &ge; 3.8
 - Packages
-  - Note: `run.py` or `src/setup.py` will attempt to install the following packages automatically. 
+  - Note: `run.py` or `src/setup.py` will attempt to install the following packages automatically.
   - [Tweepy](https://github.com/tweepy/tweepy): &ge; 4.0.0.a (Latest version from GitHub)
   - [You-Get](https://github.com/soimort/you-get)
   - [youtube-dl](https://github.com/ytdl-org/youtube-dl/)
   - [Pillow](https://github.com/python-pillow/Pillow)
+- A Twitter account following [Kanolive_](https://twitter.com/Kanolive_).
 - [Twitter API credentials](https://developer.twitter.com/en/docs/twitter-api/getting-started/getting-access-to-the-twitter-api)
   - Save your credential in `./src/configs/credentials.json`
   - See `./src/configs/credentials_template.json` for template.
